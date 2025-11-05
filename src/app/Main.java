@@ -1,20 +1,23 @@
 package app;
 
-import dao.TransacaoDAO;
-import model.Transacao;
-import model.Despesas;
-import model.Receita;
+import app.dao.TransacaoDAO;
+import app.model.Transacao;
+import app.model.Despesa;
+import app.model.Receita;
+import app.model.DatabaseSetup;
+import app.model.DatabaseConnection;
 
-import java.time.LocalDate;
 import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
+
     public static void main(String[] args) {
 
         DatabaseSetup.createTable();
-
         Scanner sc = new Scanner(System.in);
-        java.util.List<Transacao> transacoes = new java.util.ArrayList<>();
+        List<Transacao> transacoes = new ArrayList<>();
         int opcao;
 
         do {
@@ -25,62 +28,58 @@ public class Main {
             System.out.println("4. Ver Saldo");
             System.out.println("5. Excluir transação");
             System.out.println("0. Sair");
-            System.out.println("Escolha: ");
+            System.out.print("Escolha: ");
+
+            while (!sc.hasNextInt()) {
+                System.out.print("Digite um número válido: ");
+                sc.next();
+            }
 
             opcao = sc.nextInt();
-            sc.nextLine(); //limpar buffer
+            sc.nextLine();
 
             switch (opcao) {
+
                 case 1 -> {
                     System.out.print("Descrição: ");
                     String desc = sc.nextLine();
                     System.out.print("Valor: ");
                     double val = sc.nextDouble();
-
-                    Receita r = new Receita(desc, val, LocalDate.now());
+                    Receita r = new Receita(desc, val);
                     transacoes.add(r);
                     TransacaoDAO.salvar(r);
-                    break;
                 }
+
                 case 2 -> {
                     System.out.print("Descrição: ");
                     String desc = sc.nextLine();
                     System.out.print("Valor: ");
                     double val = sc.nextDouble();
-
-                    Despesas d = new Despesas(desc, val, LocalDate.now());
+                    Despesa d = new Despesa(desc, val);
                     transacoes.add(d);
                     TransacaoDAO.salvar(d);
-                    break;
-                }
-                case 3 -> {
-                    System.out.println("\n--- Transações ---");
-                    for (Transacao t : TransacaoDAO.listar()) {
-                        System.out.printf("ID: %d |[%s] %s - R$ %.2f (%s)\n",
-                               t.getId(), t.getTipo(), t.getDescricao(), t.getValor(), t.getData());
-                    }
-                    break;
                 }
 
+                case 3 -> TransacaoDAO.listar();
+
                 case 4 -> {
-                    double saldo = 0;
-                    for (Transacao t : TransacaoDAO.listar()) {
-                        if (t.getTipo().equals("Receita")) saldo += t.getValor();
-                        else saldo -= t.getValor();
-                    }
-                    System.out.printf("Saldo atual: R$ %.2f\n", saldo);
-                    break;
+                    double saldo = TransacaoDAO.calcularSaldo();
+                    System.out.println("Saldo total: R$ " + saldo);
                 }
+
                 case 5 -> {
-                    System.out.println("Digite o ID da transação para excluir:");
-                    int idExcluir = sc.nextInt();
-                    TransacaoDAO.deletar(idExcluir);
-                    break;
+                    System.out.print("ID da transação para excluir: ");
+                    int id = sc.nextInt();
+                    TransacaoDAO.excluir(id);
                 }
+
                 case 0 -> System.out.println("Saindo...");
-                default -> System.out.println("Opção inválida");
+
+                default -> System.out.println("Opção inválida!");
             }
 
         } while (opcao != 0);
     }
 }
+
+
